@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ayon's Random CHAT</title>
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --accent: #ff3e3e; /* Hot Red like Omegle */
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background: var(--bg);
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* Home Screen */
+        #home-screen {
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            height: 100vh; text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3rem; margin-bottom: 10px;
+            background: linear-gradient(to right, #ff3e3e, #ff8c00);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .start-btn {
+            background: var(--accent);
+            border: none; padding: 15px 40px;
+            color: white; font-size: 20px;
+            font-weight: bold; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 0 20px rgba(255, 62, 62, 0.4);
+            transition: 0.3s;
+        }
+
+        /* Video Interface */
+        #chat-screen {
+            display: none; height: 100vh; width: 100vw;
+            position: relative;
+        }
+
+        #video-frame { height: 100%; width: 100%; }
+
+        /* Floating Controls */
+        .controls {
+            position: absolute; bottom: 30px;
+            left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; z-index: 100;
+        }
+
+        .btn {
+            padding: 12px 25px; border-radius: 30px;
+            border: none; font-weight: bold; cursor: pointer;
+        }
+
+        .next-btn { background: #00c853; color: white; }
+        .stop-btn { background: #f44336; color: white; }
+
+        /* Status Indicator */
+        #status {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0,0,0,0.5); padding: 5px 15px;
+            border-radius: 20px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="home-screen">
+        <h1 class="hero-title">Ayon's Random CHAT</h1>
+        <p>Talk to strangers without login! (No Email Required)</p>
+        <button class="start-btn" onclick="startChat()">Start Chatting</button>
+    </div>
+
+    <div id="chat-screen">
+        <div id="status">Connecting...</div>
+        <div id="video-frame"></div>
+        
+        <div class="controls">
+            <button class="btn stop-btn" onclick="stopChat()">Stop</button>
+            <button class="btn next-btn" onclick="nextStranger()">Next (Swipe)</button>
+        </div>
+    </div>
+
+    <script>
+        let api = null;
+
+        function startChat() {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'block';
+            connectToStranger();
+        }
+
+        function connectToStranger() {
+            if(api) api.dispose();
+
+            // লজিক: ১ থেকে ১০০ এর মধ্যে যেকোনো একটি রুমে পাঠানো। 
+            // রিয়েল টাইম মেকিং এর জন্য একটি ডাটাবেস লাগে, কিন্তু ফ্রিতে এটিই সেরা উপায়।
+            const randomRoom = "AyonsOmegleRoom_" + Math.floor(Math.random() * 100); 
+            
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: randomRoom,
+                parentNode: document.querySelector('#video-frame'),
+                width: '100%',
+                height: '100%',
+                configOverwrite: { 
+                    startWithAudioMuted: false,
+                    prejoinPageEnabled: false 
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'chat', 'tileview'],
+                    MOBILE_APP_PROMO: false
+                }
+            };
+
+            api = new JitsiMeetExternalAPI(domain, options);
+            document.getElementById('status').innerText = "In Room: " + randomRoom;
+        }
+
+        function nextStranger() {
+            document.getElementById('status').innerText = "Finding someone new...";
+            connectToStranger();
+        }
+
+        function stopChat() {
+            if(api) api.dispose();
+            document.getElementById('chat-screen').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

@@ -3,96 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayon's Voice CHAT</title>
-    <script src="https://meet.jit.si/external_api.js"></script>
+    <title>Ayon's Meet - Clone</title>
+    <script src="https://unpkg.com/@daily-co/daily-js"></script>
     <style>
+        :root {
+            --gm-blue: #1a73e8;
+            --gm-dark: #202124;
+        }
         body {
-            margin: 0; padding: 0;
-            background: #10121a;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh;
+            margin: 0; font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            background-color: white; color: var(--gm-dark);
+            display: flex; flex-direction: column; height: 100vh;
         }
-        .container {
-            background: #1c1f2e;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 90%; max-width: 350px;
+        /* Header */
+        header {
+            padding: 15px 30px; display: flex; align-items: center;
+            border-bottom: 1px solid #ddd;
         }
-        h2 { color: #5865f2; margin-bottom: 20px; }
+        .logo { font-size: 22px; color: #5f6368; font-weight: 500; }
+        .logo span { color: var(--gm-blue); font-weight: bold; }
+
+        /* Main UI */
+        #lobby {
+            display: flex; flex-grow: 1; align-items: center;
+            justify-content: space-around; padding: 50px; flex-wrap: wrap;
+        }
+        .hero-text { max-width: 450px; }
+        .hero-text h1 { font-size: 44px; margin-bottom: 20px; font-weight: 400; }
+        .hero-text p { font-size: 18px; color: #5f6368; line-height: 1.5; }
+        
+        .action-area { display: flex; gap: 15px; margin-top: 30px; }
         input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 8px;
-            background: #2f3136;
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 12px 15px; border: 1px solid #dadce0;
+            border-radius: 4px; width: 250px; font-size: 16px;
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #5865f2;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+        .btn-join {
+            background: var(--gm-blue); color: white; border: none;
+            padding: 12px 24px; border-radius: 4px; cursor: pointer;
+            font-weight: 500; font-size: 16px;
         }
-        button:hover { background: #4752c4; }
-        #call-screen { display: none; width: 100%; height: 100%; position: fixed; top: 0; left: 0; background: #000; }
+
+        /* Call Screen */
+        #call-frame {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: white; z-index: 999;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container" id="setup">
-        <h2>Ayon's Voice</h2>
-        <p style="color: #b9bbbe; font-size: 14px;">Bondhur sathe miliye ek-i name room khulo</p>
-        
-        <input type="text" id="username" placeholder="Username (e.g. ayon77)">
-        <button onclick="joinAudioRoom()">Start Audio Call</button>
+    <header>
+        <div class="logo">Ayon's <span>Meet</span></div>
+    </header>
+
+    <div id="lobby">
+        <div class="hero-text">
+            <h1>Premium video meetings. Now free for everyone.</h1>
+            <p>We re-engineered the service we built for secure business meetings, Google Meet, to make it free and available for all.</p>
+            
+            <div class="action-area">
+                <input type="text" id="roomName" placeholder="Enter room name (e.g. Gossip)">
+                <button class="btn-join" onclick="startMeeting()">Join / Create</button>
+            </div>
+        </div>
+        <div class="hero-img">
+            <img src="https://www.gstatic.com/meet/google_meet_marketing_ongoing_assets_grid_2x_727039989.png" width="400" alt="Meet">
+        </div>
     </div>
 
-    <div id="call-screen">
-        <div id="meet-frame" style="height: 90%;"></div>
-        <button onclick="location.reload()" style="height: 10%; border-radius: 0; background: #ed4245;">Leave Call</button>
-    </div>
+    <div id="call-frame"></div>
 
     <script>
-        function joinAudioRoom() {
-            const user = document.getElementById('username').value.trim();
-            if (!user) {
-                alert("Please enter a username!");
-                return;
-            }
+        async function startMeeting() {
+            const room = document.getElementById('roomName').value.trim();
+            if (!room) return alert("Ekta room name dao!");
 
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('call-screen').style.display = 'block';
+            document.getElementById('lobby').style.display = 'none';
+            const callDiv = document.getElementById('call-frame');
+            callDiv.style.display = 'block';
 
-            const domain = 'meet.jit.si';
-            const options = {
-                roomName: "AyonsVoice_" + user, // ইউনিক রুম নাম
-                parentNode: document.querySelector('#meet-frame'),
-                width: '100%',
-                height: '100%',
-                configOverwrite: {
-                    startWithVideoMuted: true, // ভিডিও অটোমেটিক বন্ধ থাকবে
-                    startWithAudioMuted: false,
-                    prejoinPageEnabled: false
+            // Create the call frame
+            // Note: Use 'https://your-name.daily.co/room-name' for custom rooms.
+            // For now, it will use a temporary demo link pattern.
+            const callFrame = window.DailyIframe.createFrame(callDiv, {
+                iframeStyle: {
+                    position: 'fixed',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    border: '0',
                 },
-                interfaceConfigOverwrite: {
-                    TOOLBAR_BUTTONS: ['microphone', 'chat', 'hangup'], // শুধু অডিও কন্ট্রোল
-                    SETTINGS_SECTIONS: ['devices', 'language']
-                }
-            };
-            const api = new JitsiMeetExternalAPI(domain, options);
+                showLeaveButton: true,
+            });
+
+            // Eita ekta temporary public link pattern. Professional use-er jonno daily.co te ekta free account khule URL ta bosiye nio.
+            callFrame.join({ url: `https://ayon-chat.daily.co/${room}` });
+
+            callFrame.on('left-meeting', () => {
+                location.reload();
+            });
         }
     </script>
 </body>

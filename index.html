@@ -3,121 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Meet Clone | No Login</title>
+    <title>Ayon's Meet | Premium Video Calls</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Roboto', Arial, sans-serif; background: #202124; color: white; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'Google Sans', Roboto, Arial, sans-serif; background: #202124; color: white; height: 100vh; display: flex; flex-direction: column; }
 
-        /* Header Area */
-        header { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 22px; color: #e8eaed; display: flex; align-items: center; gap: 10px; }
-        .time { color: #e8eaed; font-size: 18px; }
-
-        /* Main Video Grid */
-        #meeting-view {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            padding: 20px;
-            align-content: center;
-        }
-        .video-box {
-            background: #3c4043;
-            border-radius: 8px;
-            aspect-ratio: 16 / 9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .user-name { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 4px; font-size: 14px; }
-
-        /* Bottom Control Bar */
-        footer {
-            height: 80px;
-            background: #202124;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        .control-btn {
-            width: 45px; height: 45px;
-            border-radius: 50%;
-            border: none;
-            background: #3c4043;
-            color: white;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
-        }
-        .control-btn:hover { background: #4a4d51; }
-        .leave-btn { background: #ea4335; width: 60px; border-radius: 25px; }
-        .leave-btn:hover { background: #d93025; }
-
-        /* Entry Screen */
+        /* --- LOBBY SCREEN --- */
         #lobby {
             position: fixed; inset: 0; background: white; color: #202124;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000;
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
-        .join-box { text-align: center; max-width: 400px; }
-        h1 { font-size: 32px; margin-bottom: 20px; font-weight: 400; }
-        input { width: 100%; padding: 15px; border: 1px solid #dadce0; border-radius: 4px; margin-bottom: 15px; font-size: 16px; }
-        .start-btn { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .lobby-content { max-width: 400px; text-align: center; padding: 20px; }
+        .logo { font-size: 32px; font-weight: bold; margin-bottom: 30px; color: #1a73e8; }
+        input { width: 100%; padding: 15px; border: 1px solid #dadce0; border-radius: 8px; margin-bottom: 10px; font-size: 16px; outline: none; }
+        .btn-main { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-main:hover { background: #1765cc; }
+        .divider { margin: 20px 0; color: #70757a; position: relative; }
+
+        /* --- CALL SCREEN --- */
+        #call-screen { display: none; flex: 1; flex-direction: column; }
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; padding: 20px; background: #202124; }
+        video { width: 100%; height: 100%; background: #3c4043; border-radius: 10px; object-fit: cover; transform: scaleX(-1); }
+
+        /* --- CONTROLS --- */
+        footer { height: 80px; background: #202124; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 1px solid #3c4043; }
+        .control-btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: #3c4043; color: white; cursor: pointer; font-size: 20px; transition: 0.3s; }
+        .control-btn.active { background: #ea4335; }
+        .invite-info { position: absolute; left: 20px; color: #e8eaed; font-size: 14px; }
+        .copy-btn { background: none; border: 1px solid #5f6368; color: #8ab4f8; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 12px; }
+
+        .leave-btn { width: 65px; border-radius: 30px; background: #ea4335; }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <div class="join-box">
-            <img src="https://www.gstatic.com/meet/google_meet_horizontal_wordmark_2020q4_1x_icon_124_40_2373e79660dabbf194273d27aa7ee1f0.png" alt="Meet" style="margin-bottom: 20px;">
-            <h1>Ready to join?</h1>
-            <input type="text" id="roomName" placeholder="Enter meeting code">
-            <button class="start-btn" onclick="joinMeeting()">Join Now</button>
-            <p style="margin-top: 15px; color: #5f6368; font-size: 14px;">No account or verification needed.</p>
+        <div class="lobby-content">
+            <div class="logo">Ayon's Meet</div>
+            <h1>Premium video calls.</h1>
+            <p style="margin-bottom: 30px; color: #5f6368;">Click 'New Meeting' to get a code you can send to people you want to meet with.</p>
+            
+            <button class="btn-main" onclick="createNewMeeting()">New Meeting</button>
+            <div class="divider">OR</div>
+            <input type="text" id="joinID" placeholder="Enter a code or link">
+            <button class="btn-main" style="background: white; color: #1a73e8; border: 1px solid #dadce0;" onclick="joinMeeting()">Join</button>
         </div>
     </div>
 
-    <header>
-        <div class="logo">Ayon's Meet</div>
-        <div class="time" id="clock">12:00 PM</div>
-    </header>
+    <div id="call-screen">
+        <div class="invite-info" id="inviteArea">
+            Meeting Code: <span id="currentCode">...</span>
+            <button class="copy-btn" onclick="copyCode()">Copy Info</button>
+        </div>
+        
+        <div id="video-grid">
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
 
-    <div id="meeting-view">
-        <div class="video-box">
-            <div class="user-name">You (Camera Off)</div>
-            <div style="font-size: 50px;">👤</div>
-        </div>
-        <div class="video-box" id="remote-video" style="display:none;">
-            <div class="user-name">Friend</div>
-            <div style="font-size: 50px;">👥</div>
-        </div>
+        <footer>
+            <button class="control-btn" id="muteBtn" onclick="toggleAudio()">🎤</button>
+            <button class="control-btn" id="camBtn" onclick="toggleVideo()">📷</button>
+            <button class="control-btn leave-btn" onclick="location.reload()">📞</button>
+            <button class="control-btn" onclick="alert('Chat functionality can be added next!')">💬</button>
+        </footer>
     </div>
-
-    <footer>
-        <button class="control-btn" title="Mute">🎤</button>
-        <button class="control-btn" title="Camera">📷</button>
-        <button class="control-btn" title="Captions">CC</button>
-        <button class="control-btn leave-btn" onclick="location.reload()" title="Leave">📞</button>
-        <button class="control-btn" title="Raise Hand">✋</button>
-        <button class="control-btn" title="More Options">⋮</button>
-    </footer>
 
     <script>
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
+        let myStream;
+        let peer;
+        let currentCall;
 
+        // --- STEP 1: CREATE NEW MEETING ---
+        function createNewMeeting() {
+            const randomID = Math.random().toString(36).substring(2, 8); // e.g. "x7y2z9"
+            initPeer(randomID);
+        }
+
+        // --- STEP 2: JOIN EXISTING MEETING ---
         function joinMeeting() {
-            const room = document.getElementById('roomName').value;
-            if(!room) return alert("Code dao!");
-            document.getElementById('lobby').style.display = 'none';
+            const code = document.getElementById('joinID').value.trim();
+            if(!code) return alert("Please enter a code!");
+            initPeer(null, code);
+        }
+
+        // --- STEP 3: PEER JS LOGIC ---
+        function initPeer(id, targetID = null) {
+            peer = id ? new Peer(id) : new Peer(); // If creating, use ID. If joining, let PeerJS generate one.
+
+            peer.on('open', (myId) => {
+                const finalId = id || myId;
+                document.getElementById('lobby').style.display = 'none';
+                document.getElementById('call-screen').style.display = 'flex';
+                document.getElementById('currentCode').innerText = finalId;
+                
+                startCamera().then(() => {
+                    if(targetID) {
+                        // If joining, call the friend
+                        const call = peer.call(targetID, myStream);
+                        handleCall(call);
+                    }
+                });
+            });
+
+            // Receive a call
+            peer.on('call', (call) => {
+                call.answer(myStream);
+                handleCall(call);
+            });
+        }
+
+        async function startCamera() {
+            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = myStream;
+        }
+
+        function handleCall(call) {
+            call.on('stream', (remoteStream) => {
+                if(!document.getElementById('remoteVideo')) {
+                    const video = document.createElement('video');
+                    video.id = 'remoteVideo';
+                    video.srcObject = remoteStream;
+                    video.autoplay = true;
+                    video.playsinline = true;
+                    document.getElementById('video-grid').appendChild(video);
+                }
+            });
+        }
+
+        // --- CONTROLS ---
+        function toggleAudio() {
+            const enabled = myStream.getAudioTracks()[0].enabled;
+            myStream.getAudioTracks()[0].enabled = !enabled;
+            document.getElementById('muteBtn').classList.toggle('active');
+        }
+
+        function toggleVideo() {
+            const enabled = myStream.getVideoTracks()[0].enabled;
+            myStream.getVideoTracks()[0].enabled = !enabled;
+            document.getElementById('camBtn').classList.toggle('active');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('currentCode').innerText;
+            navigator.clipboard.writeText(code);
+            alert("Meeting code copied: " + code);
         }
     </script>
 </body>
